@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Invoice Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 640px; margin: 30px auto; }
+    label { display:block; margin-top:10px; }
+    input { width:100%; padding:8px; box-sizing:border-box; }
+    button { margin-top:12px; padding:10px 16px; }
+  </style>
+</head>
+<body>
+  <h2>Generate Invoice</h2>
+
+  <form id="invoiceForm">
+    <label>Name <input name="name" required /></label>
+    <label>Address <input name="address" required /></label>
+    <label>Admission No <input name="admissionNo" required /></label>
+    <label>Course <input name="course" required /></label>
+    <label>Paid Amount <input name="paidAmount" id="amount" type="number" required /></label>
+    <label>Outstanding Amount <input name="outstandingAmount" required /></label>
+    <label>Date <input name="date" type="date" required /></label>
+    <label> 
+      Payment Method
+      <select name="paymentMethod" required>
+        <option value="">-- Select Payment Method --</option>
+        <option value="Cash">Cash</option>
+        <option value="Cheque">Cheque</option>
+        <option value="Bank Transfer">Bank Transfer</option>
+        <option value="Online / UPI">Online / UPI</option>
+      </select>
+    </label>
+    <label>
+    Transaction Ref / Cheque No.:
+    <input name="transactionRef" type="text" required />
+    </label>
+    <label>
+    Receipt No:
+    <input name="receiptNo" type="text" required />
+    </label>
+
+     <label>
+    Amount in Words
+    <input name="wordAmount" id="amountWords" type="text" readonly />
+  </label>
+
+
+
+
+    <label>Email (to send invoice) <input name="email" type="email" required /></label>
+
+    <button type="submit">Generate & Send</button>
+  </form>
+
+  <div id="result" style="margin-top:16px;"></div>
+
+  <script>
+/* ---------------- NUMBER TO WORDS (INDIAN SYSTEM) ---------------- */
+
+function numberToWords(num) {
+    const a = [
+        "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+        "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+        "Seventeen", "Eighteen", "Nineteen"
+    ];
+
+    const b = [
+        "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+    ];
+
+    function twoDigits(n) {
+        if (n < 20) return a[n];
+        return b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : "");
+    }
+
+    function threeDigits(n) {
+        if (n < 100) return twoDigits(n);
+        return a[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + twoDigits(n % 100) : "");
+    }
+
+    if (num === 0) return "Zero Only";
+
+    let words = "";
+
+    const crore = Math.floor(num / 10000000);
+    num %= 10000000;
+
+    const lakh = Math.floor(num / 100000);
+    num %= 100000;
+
+    const thousand = Math.floor(num / 1000);
+    num %= 1000;
+
+    const hundred = num;
+
+    if (crore) words += threeDigits(crore) + " Crore ";
+    if (lakh) words += threeDigits(lakh) + " Lakh ";
+    if (thousand) words += threeDigits(thousand) + " Thousand ";
+    if (hundred) words += threeDigits(hundred);
+
+    return words.trim() + " Rupees Only";
+}
+
+/* ---------------- AUTO UPDATE AMOUNT IN WORDS ---------------- */
+
+document.getElementById("amount").addEventListener("input", () => {
+  const value = document.getElementById("amount").value;
+  document.getElementById("amountWords").value = value ? numberToWords(value) : "";
+});
+
+/* ---------------- SHOW/HIDE REF FIELD ---------------- */
+
+const paymentMethod = document.getElementById("paymentMethod");
+const refLabel = document.getElementById("refLabel");
+
+paymentMethod.addEventListener("change", () => {
+  const value = paymentMethod.value;
+
+  if (value === "cash") {
+    refLabel.style.display = "none";
+  } else {
+    refLabel.style.display = "block";
+  }
+});
+
+// hide by default
+refLabel.style.display = "none";
+
+</script>
+
+
+
+
+  <script>
+    document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const fd = new FormData(e.target);
+      const body = Object.fromEntries(fd.entries());
+
+      document.getElementById('result').textContent = 'Generating…';
+
+      try {
+        const res = await fetch("http://localhost:5000/generate-invoice", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          document.getElementById('result').innerHTML =
+            `Invoice sent successfully!`;
+        } else {
+          document.getElementById('result').textContent =
+            'Error: ' + data.error;
+        }
+      } catch (err) {
+        document.getElementById('result').textContent =
+          'Request failed: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
