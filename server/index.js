@@ -114,6 +114,7 @@ app.post("/generate-invoice", async (req, res) => {
     // FIX FOR RENDER → Puppeteer config
     // -------------------------------
     const browser = await puppeteer.launch({
+      executablePath: puppeteer.executablePath(),
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
