@@ -5,17 +5,20 @@ const handlebars = require("handlebars");
 const nodemailer = require("nodemailer");
 const puppeteer = require("puppeteer");
 const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
+const gmailUser = process.env.gmail_username;
+const gmailPass = process.env.gmail_app_password;
 // Email setup (use your Gmail + app password)
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "adhnanadhnan001@gmail.com",
-    pass: "oxrb lljy doxb frto",
+    user: gmailUser,
+    pass: gmailPass,
   },
 });
 
@@ -49,10 +52,15 @@ app.post("/generate-invoice", async (req, res) => {
 
     // Send email
     await transporter.sendMail({
-      from: "adhnanadhnan001@gmail.com",
+      from: gmailUser,
       to: data.email,
-      subject: "Invoice from Your Company",
-      text: "Please find your invoice attached.",
+      subject: "Course Fee Invoice – Aspiron Institute of Coaching",
+      text: `Dear Student,
+Your invoice for the JHI coaching programme is attached.
+
+Thank you for choosing Aspiron Institute.
+Regards,
+Aspiron – Administration`,
       attachments: [{ filename: "invoice.pdf", path: pdfPath }],
     });
 
